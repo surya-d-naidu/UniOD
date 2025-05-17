@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { 
-  Loader2, Check, X, Search, Filter, Download, 
+  Search, Filter, Download, 
   ChevronLeft, ChevronRight 
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -48,53 +47,7 @@ export function AdminOdTable() {
     }
   });
   
-  // Approve OD request mutation
-  const approveMutation = useMutation({
-    mutationFn: async (requestId: number) => {
-      const res = await apiRequest("POST", `/api/admin/approve-od/${requestId}`);
-      return await res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "OD Request Approved",
-        description: "The OD request has been approved successfully.",
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/admin/od-requests"],
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Approval Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Reject OD request mutation
-  const rejectMutation = useMutation({
-    mutationFn: async (requestId: number) => {
-      const res = await apiRequest("POST", `/api/admin/reject-od/${requestId}`);
-      return await res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "OD Request Rejected",
-        description: "The OD request has been rejected.",
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/admin/od-requests"],
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Rejection Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // OD requests are automatically approved when submitted by students
   
   // Export OD report
   const handleExport = async () => {
@@ -109,15 +62,7 @@ export function AdminOdTable() {
     }
   };
   
-  // Handle approve click
-  const handleApprove = (requestId: number) => {
-    approveMutation.mutate(requestId);
-  };
-  
-  // Handle reject click
-  const handleReject = (requestId: number) => {
-    rejectMutation.mutate(requestId);
-  };
+  // All OD requests are auto-approved when submitted by students
   
   // Filter and paginate OD requests
   let filteredRequests = odRequests || [];
