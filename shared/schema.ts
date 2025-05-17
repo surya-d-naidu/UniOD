@@ -46,7 +46,10 @@ export const loginUserSchema = z.object({
 });
 
 export const insertOdRequestSchema = createInsertSchema(odRequests)
-  .omit({ id: true, approvedById: true, approvedAt: true, createdAt: true, updatedAt: true });
+  .omit({ id: true, approvedById: true, approvedAt: true, createdAt: true, updatedAt: true })
+  .extend({
+    date: z.string().transform(val => new Date(val)),
+  });
 
 export const updateOdRequestSchema = insertOdRequestSchema.partial();
 

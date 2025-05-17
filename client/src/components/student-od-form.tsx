@@ -229,23 +229,7 @@ export function StudentOdForm({
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="reason"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reason for OD</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Please provide reason for your on-duty request" 
-                          className="resize-none h-24"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
                 
                 <div className="pt-4 flex justify-between">
                   <Button
