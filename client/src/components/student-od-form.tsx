@@ -21,7 +21,6 @@ const formSchema = z.object({
   session: z.enum(["FN", "AN", "BOTH"], {
     required_error: "Please select a session",
   }),
-  reason: z.string().min(5, "Reason must be at least 5 characters").max(200, "Reason must not exceed 200 characters"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -55,7 +54,6 @@ export function StudentOdForm({
     defaultValues: {
       date: selectedDate || new Date(),
       session: "FN",
-      reason: "",
     },
   });
   
@@ -82,7 +80,6 @@ export function StudentOdForm({
       const payload = {
         date: data.date.toISOString(),
         session: data.session,
-        reason: data.reason,
         status: "approved",
         isConfirmedSubmission: true
       };
@@ -98,7 +95,6 @@ export function StudentOdForm({
       form.reset({
         date: new Date(),
         session: "FN",
-        reason: "",
       });
       setSelectedDay(undefined);
       queryClient.invalidateQueries({ queryKey: ["/api/od-requests"] });
@@ -155,7 +151,6 @@ export function StudentOdForm({
     form.reset({
       date: new Date(),
       session: "FN",
-      reason: "",
     });
     setSelectedDay(undefined);
     if (onDateSelect) {
