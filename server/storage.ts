@@ -72,11 +72,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllStudents(): Promise<User[]> {
-    return db
+    const students = await db
       .select()
       .from(users)
       .where(eq(users.role, "student"))
       .orderBy(asc(users.name));
+    
+    // Enhance with admin approver data
+    const enhancedStudents = await Promise.all(
+      students.map(async (student) => {
+        let approverName = null;
+        
+        // Get approver info if available
+        if (student.approvedById) {
+          const approver = await this.getUser(student.approvedById);
+          approverName = approver?.name;
+        }
+        
+        // Get OD request counts
+        const odRequests = await this.getOdRequestsByUser(student.id);
+        const hasSubmissions = odRequests.length > 0;
+        
+        return {
+          ...student,
+          approverName,
+          hasSubmissions,
+          odCount: odRequests.length
+        };
+      })
+    );
+    
+    return enhancedStudents;
   }
 
   async getPendingStudents(): Promise<User[]> {

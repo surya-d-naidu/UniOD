@@ -4,6 +4,7 @@ import { AdminNav } from "@/components/admin-nav";
 import { AdminStats } from "@/components/admin-stats";
 import { AdminStudentsTable } from "@/components/admin-students-table";
 import { AdminOdTable } from "@/components/admin-od-table";
+import { AdminApprovedStudents } from "@/components/admin-approved-students";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
