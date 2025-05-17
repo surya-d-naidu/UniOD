@@ -47,7 +47,7 @@ export default function AdminDashboard() {
           <AdminStats />
           
           {/* Admin Management Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             {/* Left Column: Student Management */}
             <div className="lg:col-span-1">
               <AdminStudentsTable />
@@ -57,6 +57,11 @@ export default function AdminDashboard() {
             <div className="lg:col-span-2">
               <AdminOdTable />
             </div>
+          </div>
+          
+          {/* Approved Students with Status */}
+          <div className="mt-6">
+            <AdminApprovedStudents />
           </div>
         </div>
       </main>
