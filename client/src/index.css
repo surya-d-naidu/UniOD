@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 20 14.3% 4.1%;
+    --muted: 60 4.8% 95.9%;
+    --muted-foreground: 25 5.3% 44.7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
+    --border: 20 5.9% 90%;
+    --input: 20 5.9% 90%;
+    --primary: 207 90% 54%;
+    --primary-foreground: 211 100% 99%;
+    --secondary: 60 4.8% 95.9%;
+    --secondary-foreground: 24 9.8% 10%;
+    --accent: 60 4.8% 95.9%;
+    --accent-foreground: 24 9.8% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --ring: 20 14.3% 4.1%;
+    --radius: 0.5rem;
+
+    /* Custom colors for the OD system */
+    --success: 142 70% 45%;
+    --success-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+    --error: 0 84% 60%;
+    --error-foreground: 210 40% 98%;
+    
+    /* Chart colors */
+    --chart-1: 207 90% 54%;
+    --chart-2: 142 70% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 262 83% 58%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --primary: 207 90% 54%;
+    --primary-foreground: 211 100% 99%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --ring: 240 4.9% 83.9%;
+
+    /* Custom colors for the OD system */
+    --success: 142 70% 45%;
+    --success-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+    --error: 0 84% 60%;
+    --error-foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Calendar styles */
+.calendar-day {
+  aspect-ratio: 1;
+}
+
+.calendar-day:hover:not(.inactive) {
+  @apply bg-primary-100 rounded-md transition-colors cursor-pointer;
+}
+
+.calendar-day.selected {
+  @apply bg-primary-100 rounded-md;
+}
+
+.calendar-day.inactive {
+  @apply text-neutral-400 cursor-not-allowed;
+}
+
+.calendar-day .status-dot {
+  @apply absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full;
+}
+
+.calendar-day .status-dot.pending {
+  @apply bg-primary;
+}
+
+.calendar-day .status-dot.approved {
+  @apply bg-success;
+}
+
+.calendar-day .status-dot.rejected {
+  @apply bg-error;
+}
+
+/* Animation */
+.animation-fade {
+  animation: fade 0.3s ease-in-out;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Session selector */
+.session-option {
+  @apply transition-all duration-200;
+}
+
+.session-option:hover {
+  @apply transform -translate-y-1;
+}
