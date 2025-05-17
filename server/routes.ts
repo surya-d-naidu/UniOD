@@ -106,8 +106,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      await storage.confirmSubmission(req.user!.id);
-      res.status(200).json({ message: "Submission confirmed" });
+      // Auto-approve OD requests when students confirm submission
+      await storage.confirmAndApproveSubmission(req.user!.id);
+      res.status(200).json({ message: "Submission confirmed and approved" });
     } catch (error) {
       res.status(500).json({ message: "Failed to confirm submission" });
     }
@@ -186,42 +187,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(odRequests);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch OD requests" });
-    }
-  });
-
-  app.post("/api/admin/approve-od/:id", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated() || req.user!.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-    
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
-    }
-    
-    try {
-      const updatedRequest = await storage.approveOdRequest(id, req.user!.id);
-      res.json(updatedRequest);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to approve OD request" });
-    }
-  });
-
-  app.post("/api/admin/reject-od/:id", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated() || req.user!.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-    
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
-    }
-    
-    try {
-      const updatedRequest = await storage.rejectOdRequest(id, req.user!.id);
-      res.json(updatedRequest);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to reject OD request" });
     }
   });
 

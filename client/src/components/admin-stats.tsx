@@ -51,9 +51,7 @@ export function AdminStats() {
               )}
             </div>
           </div>
-          <div className="mt-4 text-xs text-muted-foreground">
-            <span className="text-[hsl(142,70%,45%)] font-medium">+12</span> new this month
-          </div>
+
         </CardContent>
       </Card>
       
@@ -75,9 +73,7 @@ export function AdminStats() {
               )}
             </div>
           </div>
-          <div className="mt-4 text-xs text-muted-foreground">
-            <span className="text-[hsl(0,84%,60%)] font-medium">+5</span> since yesterday
-          </div>
+
         </CardContent>
       </Card>
       
@@ -99,9 +95,7 @@ export function AdminStats() {
               )}
             </div>
           </div>
-          <div className="mt-4 text-xs text-muted-foreground">
-            <span className="text-[hsl(142,70%,45%)] font-medium">+18</span> this week
-          </div>
+
         </CardContent>
       </Card>
       
@@ -123,9 +117,7 @@ export function AdminStats() {
               )}
             </div>
           </div>
-          <div className="mt-4 text-xs text-muted-foreground">
-            <span className="text-muted-foreground font-medium">-3</span> from last week
-          </div>
+
         </CardContent>
       </Card>
     </div>

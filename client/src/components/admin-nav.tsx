@@ -47,12 +47,6 @@ export function AdminNav() {
                 Student Management
               </NavItem>
               <NavItem 
-                href="/admin/od-approval" 
-                isActive={location.startsWith("/admin/od-approval")}
-              >
-                OD Approval
-              </NavItem>
-              <NavItem 
                 href="/admin/reports" 
                 isActive={location.startsWith("/admin/reports")}
               >

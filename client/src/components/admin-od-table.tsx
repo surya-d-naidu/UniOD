@@ -295,36 +295,13 @@ export function AdminOdTable() {
                         />
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {request.status === "pending" ? (
-                          <div className="flex justify-end space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleReject(request.id)}
-                              disabled={rejectMutation.isPending}
-                              className="border-[hsl(0,84%,60%)] text-[hsl(0,84%,60%)] hover:bg-[hsl(0,84%,95%)] hover:text-[hsl(0,84%,60%)]"
-                            >
-                              Deny
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleApprove(request.id)}
-                              disabled={approveMutation.isPending}
-                              className="bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,40%)]"
-                            >
-                              Approve
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-primary hover:text-primary/80"
-                          >
-                            View
-                          </Button>
-                        )}
+                        <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary hover:text-primary/80"
+                      >
+                        View
+                      </Button>
                       </td>
                     </tr>
                   );
