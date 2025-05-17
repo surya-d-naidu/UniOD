@@ -33,14 +33,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
+      // Auto-approve OD requests
       const parsedData = insertOdRequestSchema.parse({
         ...req.body,
-        userId: req.user!.id
+        userId: req.user!.id,
+        status: "approved",
+        approvedAt: new Date(),
+        isConfirmedSubmission: true
       });
       
       const odRequest = await storage.createOdRequest(parsedData);
       res.status(201).json(odRequest);
     } catch (error) {
+      console.error("OD request error:", error);
       res.status(400).json({ message: "Invalid request data" });
     }
   });
