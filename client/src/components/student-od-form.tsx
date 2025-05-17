@@ -83,7 +83,7 @@ export function StudentOdForm({
         date: data.date.toISOString(),
         session: data.session,
         reason: data.reason,
-        status: "draft"
+        status: "approved"
       };
       
       const res = await apiRequest("POST", "/api/od-requests", payload);
@@ -91,8 +91,8 @@ export function StudentOdForm({
     },
     onSuccess: () => {
       toast({
-        title: "OD Request Submitted",
-        description: "Your OD request has been saved as a draft.",
+        title: "OD Request Approved",
+        description: "Your OD request has been automatically approved.",
       });
       form.reset({
         date: new Date(),
@@ -123,7 +123,7 @@ export function StudentOdForm({
     onSuccess: () => {
       toast({
         title: "All Submissions Confirmed",
-        description: "Your OD requests have been confirmed and sent for approval.",
+        description: "Your OD requests have been confirmed and automatically approved.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/od-requests"] });
       if (onRefresh) {

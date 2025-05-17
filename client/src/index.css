@@ -88,11 +88,11 @@
 }
 
 .calendar-day:hover:not(.inactive) {
-  @apply bg-primary-100 rounded-md transition-colors cursor-pointer;
+  @apply bg-primary/10 rounded-md transition-colors cursor-pointer;
 }
 
 .calendar-day.selected {
-  @apply bg-primary-100 rounded-md;
+  @apply bg-primary/10 rounded-md;
 }
 
 .calendar-day.inactive {
@@ -108,11 +108,11 @@
 }
 
 .calendar-day .status-dot.approved {
-  @apply bg-success;
+  @apply bg-green-500;
 }
 
 .calendar-day .status-dot.rejected {
-  @apply bg-error;
+  @apply bg-red-500;
 }
 
 /* Animation */

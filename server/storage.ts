@@ -28,13 +28,14 @@ export interface IStorage {
   updateOdRequest(id: number, request: UpdateOdRequest): Promise<OdRequest>;
   deleteOdRequest(id: number): Promise<void>;
   confirmSubmission(userId: number): Promise<void>;
+  confirmAndApproveSubmission(userId: number): Promise<void>;
   getAllOdRequests(): Promise<OdRequest[]>;
   getOdRequestsByStatus(status: string): Promise<OdRequest[]>;
   approveOdRequest(id: number, adminId: number): Promise<OdRequest>;
   rejectOdRequest(id: number, adminId: number): Promise<OdRequest>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -162,12 +163,13 @@ export class DatabaseStorage implements IStorage {
     await db.delete(odRequests).where(eq(odRequests.id, id));
   }
 
-  async confirmSubmission(userId: number): Promise<void> {
+  async confirmAndApproveSubmission(userId: number): Promise<void> {
     await db
       .update(odRequests)
       .set({
         isConfirmedSubmission: true,
-        status: "pending",
+        status: "approved",
+        approvedAt: new Date(),
         updatedAt: new Date()
       })
       .where(
@@ -176,6 +178,11 @@ export class DatabaseStorage implements IStorage {
           eq(odRequests.status, "draft")
         )
       );
+  }
+  
+  async confirmSubmission(userId: number): Promise<void> {
+    // Keep for backward compatibility
+    return this.confirmAndApproveSubmission(userId);
   }
 
   async getAllOdRequests(): Promise<OdRequest[]> {
