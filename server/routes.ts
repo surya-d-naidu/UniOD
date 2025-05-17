@@ -33,14 +33,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
+      // Handle date conversion on the server side
+      const dateStr = req.body.date;
+      const date = new Date(dateStr);
+      
       // Auto-approve OD requests
-      const parsedData = insertOdRequestSchema.parse({
+      const parsedData = {
         ...req.body,
+        date: date,
         userId: req.user!.id,
         status: "approved",
         approvedAt: new Date(),
         isConfirmedSubmission: true
-      });
+      };
       
       const odRequest = await storage.createOdRequest(parsedData);
       res.status(201).json(odRequest);
