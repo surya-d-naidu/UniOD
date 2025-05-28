@@ -45,7 +45,7 @@ export function setupAuth(app: Express) {
     unset: 'destroy'
   };
 
-  // Configure trust proxy for Vercel
+  // Configure trust proxy for Netlify
   app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
   app.use(session(sessionSettings));
   app.use(passport.initialize());

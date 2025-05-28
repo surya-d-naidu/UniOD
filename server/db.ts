@@ -2,7 +2,7 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from "@shared/schema";
 
-// Configure Neon for Vercel serverless environment
+// Configure Neon for Netlify serverless environment
 neonConfig.useSecureWebSocket = true;
 neonConfig.pipelineConnect = false;
 neonConfig.pipelineTLS = false;
@@ -24,14 +24,14 @@ if (!connectionString) {
 
 console.log('Connecting to database...');
 
-// Configure the pool for Vercel serverless with minimal connections
+// Configure the pool for Netlify serverless with minimal connections
 const poolConfig = {
   connectionString,
   max: 1, // Single connection for serverless
   min: 0, // No idle connections
   idleTimeoutMillis: 10000, // 10 second idle timeout
   connectionTimeoutMillis: 10000, // 10 second connection timeout
-  application_name: 'university-od-tracker-vercel'
+  application_name: 'university-od-tracker-netlify'
 };
 
 // Create the pool

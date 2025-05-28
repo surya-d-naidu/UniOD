@@ -1,4 +1,4 @@
-# Vercel ignore file
+# Netlify ignore file
 node_modules
 .env
 .env.local
@@ -13,7 +13,7 @@ yarn-error.log*
 .vscode/
 .idea/
 
-# Build outputs (except what Vercel needs)
+# Build outputs (except what Netlify needs)
 dist/
 build/
 
@@ -25,13 +25,11 @@ tests/
 *.spec.js
 *.spec.ts
 
-# Documentation
-README.md
+# Documentation (keep README for Netlify)
 docs/
 
 # Development scripts
 build.sh
-deploy.sh
 
 # Excel test files
 *.xlsx
@@ -41,3 +39,11 @@ analyze-*.js
 esm-test.mjs
 simple-test.js
 ts-test.ts
+
+# Git files
+.git
+.gitignore
+
+# Server files (not needed for static build)
+server/
+shared/

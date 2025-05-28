@@ -1,13 +1,13 @@
-# Vercel Deployment Checklist
+# Netlify Deployment Checklist
 
 ## ✅ Pre-Deployment Setup
 
-- [x] Created Vercel-compatible API structure (`/api/index.ts`)
-- [x] Updated build scripts for Vercel
+- [x] Created Netlify-compatible API structure (`/netlify/functions/api.ts`)
+- [x] Updated build scripts for Netlify
 - [x] Configured database for serverless environment
 - [x] Set up CORS for production
 - [x] Created deployment documentation
-- [x] Added `.vercelignore` for optimized builds
+- [x] Added `.netlifyignore` for optimized builds
 
 ## 🚀 Deployment Steps
 
@@ -16,8 +16,8 @@
 - [ ] Get database connection string (use **pooled connection**)
 - [ ] Generate secure session secret
 
-### 2. Vercel Setup
-- [ ] Create Vercel account
+### 2. Netlify Setup
+- [ ] Create Netlify account
 - [ ] Connect GitHub repository (recommended)
 - [ ] Set environment variables:
   ```
@@ -32,7 +32,7 @@
 
 ### 4. Deploy
 - [ ] Push code to GitHub and auto-deploy, OR
-- [ ] Use `./deploy.sh` script for CLI deployment
+- [ ] Use `./deploy-netlify.sh` script for CLI deployment
 
 ### 5. Post-Deployment
 - [ ] Test admin login functionality
@@ -48,14 +48,14 @@
 | `SESSION_SECRET` | Secure random string for sessions | `your-super-secret-key-here` |
 | `NODE_ENV` | Environment mode | `production` |
 
-## 🏗️ Architecture for Vercel
+## 🏗️ Architecture for Netlify
 
 ```
-University OD Tracker (Vercel)
+University OD Tracker (Netlify)
 ├── Frontend (Static Build)
 │   └── /client/* → served as static files
 ├── API (Serverless Functions)
-│   └── /api/index.ts → handles all /api/* requests
+│   └── /netlify/functions/api.ts → handles all /api/* requests
 └── Database (Neon PostgreSQL)
     └── Pooled connections for serverless
 ```
@@ -73,15 +73,20 @@ University OD Tracker (Vercel)
    - Check cookie settings for cross-origin requests
 
 3. **Build Failures**
-   - Check Vercel function logs
+   - Check Netlify function logs
    - Verify all dependencies are in package.json
+   - Ensure `serverless-http` is installed
 
 4. **CORS Errors**
-   - Application is configured for Vercel domains
+   - Application is configured for Netlify domains
    - Check browser console for specific CORS errors
 
+5. **Function Timeout**
+   - Netlify functions have a 10-second timeout limit
+   - Optimize database queries for faster response
+
 ### Getting Help:
-- Vercel Logs: Check function logs in Vercel dashboard
+- Netlify Logs: Check function logs in Netlify dashboard
 - Database: Check Neon dashboard for connection issues
 - Application: Enable debug logging in development
 

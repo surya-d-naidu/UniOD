@@ -1,5 +1,6 @@
 import express from "express";
-import { registerRoutes } from "../server/routes";
+import serverless from "serverless-http";
+import { registerRoutes } from "../../server/routes";
 
 const app = express();
 
@@ -7,12 +8,19 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// CORS for Vercel
+// CORS for Netlify
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : '*'
-  );
+  const origin = req.headers.origin;
+  
+  // Allow requests from Netlify domains and localhost for development
+  if (origin && (
+    origin.includes('.netlify.app') || 
+    origin.includes('localhost') || 
+    origin.includes('127.0.0.1')
+  )) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -39,5 +47,5 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Export for Vercel
-export default app;
+// Export as Netlify function
+export const handler = serverless(app);
