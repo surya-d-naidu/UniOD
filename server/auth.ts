@@ -101,7 +101,7 @@ export function setupAuth(app: Express) {
         id: user.id,
         registrationNumber: user.registrationNumber,
         name: user.name,
-        role: user.role,
+        role: "student",
         isApproved: user.isApproved
       });
     } catch (error) {
