@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, Filter, Download, 
-  ChevronLeft, ChevronRight 
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { downloadFile } from "@/utils/download-helper";
 
 export function AdminOdTable() {
   const { toast } = useToast();
@@ -21,62 +22,148 @@ export function AdminOdTable() {
   
   const itemsPerPage = 5;
   
-  const { data: odRequests, isLoading } = useQuery({
-    queryKey: ["/api/admin/od-requests"],
-    onSuccess: (data) => {
-      // Extract unique user IDs
-      const userIds = [...new Set(data.map((request: any) => request.userId))];
-      
-      // Fetch user details for each unique user ID
-      userIds.forEach(async (userId) => {
-        try {
-          const res = await fetch(`/api/admin/users/${userId}`, {
-            credentials: "include",
-          });
-          if (res.ok) {
-            const userData = await res.json();
-            setUsersMap(prevMap => ({
-              ...prevMap,
-              [userId]: userData
-            }));
-          }
-        } catch (error) {
-          console.error("Error fetching user data", error);
+  // Prefetch all users
+  const { data: allUsers, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ["/api/admin/users"],
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
+  });
+
+  // Process user data when it changes
+  useEffect(() => {
+    if (allUsers && Array.isArray(allUsers)) {
+      // Create a map of users by ID for quick lookup
+      const userMap = allUsers.reduce((acc: Record<number, any>, user: any) => {
+        if (user && user.id) {
+          acc[user.id] = user;
         }
+        return acc;
+      }, {});
+      
+      setUsersMap(userMap);
+    } else if (allUsers === undefined) {
+      console.error("Error fetching all users: received undefined");
+      toast({
+        title: "Error",
+        description: "Failed to load user data. Student names may not display correctly.",
+        variant: "destructive",
       });
     }
+  }, [allUsers, toast]);
+  
+  // Need to make sure we add useEffect import
+  const { data: odRequests, isLoading: isLoadingOD } = useQuery({
+    queryKey: ["/api/admin/od-requests"],
+    retry: 3
   });
+
+  // Handle OD request fetch errors
+  useEffect(() => {
+    if (odRequests === undefined) {
+      console.error("Error fetching OD requests: received undefined");
+      toast({
+        title: "Error",
+        description: "Failed to load OD requests. Please try refreshing the page.",
+        variant: "destructive",
+      });
+    }
+  }, [odRequests, toast]);
   
   // OD requests are automatically approved when submitted by students
   
   // Export OD report
   const handleExport = async () => {
     try {
-      window.open('/api/admin/export-od-report', '_blank');
+      // Show loading toast
+      toast({
+        title: "Generating Export",
+        description: "Please wait while we generate your Excel file...",
+      });
+      
+      console.log("Starting export process...");
+      
+      // Use the download helper utility for better handling
+      await downloadFile('/api/admin/export-od-report', 'OD_SHEET.xlsx');
+      
+      console.log("Download completed successfully");
+      toast({
+        title: "Export Successful",
+        description: "OD report has been downloaded successfully.",
+      });
     } catch (error) {
+      console.error("Export error:", error);
+      
+      // Get detailed error message
+      let errorMessage = "Failed to generate export. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = `Export failed: ${error.message}`;
+        console.error(`Error details: ${error.stack}`);
+      }
+      
       toast({
         title: "Export Failed",
-        description: "Failed to generate export. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Try a direct approach as a fallback
+      try {
+        console.log("Attempting fallback export method...");
+        
+        // Show fallback toast
+        toast({
+          title: "Trying Alternative Download",
+          description: "Attempting to use an alternative download method..."
+        });
+        
+        // Open the export URL directly in a new tab as a fallback
+        const newTab = window.open('/api/admin/export-od-report', '_blank');
+        
+        // Check if the tab was actually opened (may be blocked by popup blockers)
+        if (!newTab) {
+          throw new Error("Popup blocked. Please allow popups for this site and try again.");
+        }
+        
+        // Notify the user of the fallback attempt
+        toast({
+          title: "Alternative Download Initiated",
+          description: "Please check your browser's download manager or the new tab that opened.",
+        });
+      } catch (fallbackError) {
+        console.error("Fallback export method also failed:", fallbackError);
+        
+        // Provide final fallback instructions
+        toast({
+          title: "Alternative Download Failed",
+          description: "Please try manually navigating to /api/admin/export-od-report in a new tab.",
+          variant: "destructive",
+        });
+      }
     }
   };
-  
+
   // All OD requests are auto-approved when submitted by students
   
   // Filter and paginate OD requests
-  let filteredRequests = odRequests || [];
+  let filteredRequests: any[] = Array.isArray(odRequests) ? odRequests : [];
   
   if (searchTerm) {
     filteredRequests = filteredRequests.filter((request: any) => {
-      const user = usersMap[request.userId];
-      if (!user) return false;
+      const user = getUser(request.userId);
+      
+      // If there's no user data and we're searching, still include it
+      // in case we're looking for users with missing data
+      if (!user) {
+        return searchTerm.toLowerCase().includes("unknown") || 
+               searchTerm.toLowerCase().includes("missing");
+      }
       
       const userMatch = 
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        user.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+        (user.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (user.registrationNumber || "").toLowerCase().includes(searchTerm.toLowerCase());
       
-      const reasonMatch = request.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+      const reasonMatch = (request.reason || "").toLowerCase().includes(searchTerm.toLowerCase());
       
       return userMatch || reasonMatch;
     });
@@ -88,12 +175,19 @@ export function AdminOdTable() {
   
   // Get initials for avatar
   const getInitials = (name: string) => {
-    if (!name) return '?';
+    if (!name || name === "Unknown") return '?';
     return name
       .split(' ')
+      .filter(part => part.length > 0)
       .map(part => part.charAt(0))
       .join('')
-      .toUpperCase();
+      .toUpperCase() || '?';
+  };
+  
+  // Safe user lookup function to prevent errors
+  const getUser = (userId: number) => {
+    if (!userId || !usersMap) return null;
+    return usersMap[userId] || null;
   };
   
   // Format date
@@ -126,7 +220,7 @@ export function AdminOdTable() {
               </div>
             </div>
             
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" style={{ display: 'none' }}>
               <Filter className="h-4 w-4" />
             </Button>
             
@@ -160,13 +254,10 @@ export function AdminOdTable() {
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Submission
                 </th>
-                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Action
-                </th>
               </tr>
             </thead>
             <tbody className="bg-card divide-y divide-border">
-              {isLoading ? (
+              {isLoadingOD || isLoadingUsers ? (
                 // Skeleton loading state
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
@@ -192,30 +283,31 @@ export function AdminOdTable() {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Skeleton className="h-5 w-16 rounded-full" />
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Skeleton className="h-8 w-16" />
-                        <Skeleton className="h-8 w-16" />
-                      </div>
-                    </td>
                   </tr>
                 ))
               ) : paginatedRequests.length > 0 ? (
                 // Render OD requests
                 paginatedRequests.map((request: any) => {
-                  const user = usersMap[request.userId] || {};
+                  const user = getUser(request.userId);
+                  const userName = user?.name || "Unknown Student";
+                  const regNumber = user?.registrationNumber || "No Registration Number";
+                  
                   return (
                     <tr key={request.id}>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback className="bg-primary-100 text-primary">
-                              {getInitials(user.name || "")}
+                              {getInitials(userName)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="ml-3">
-                            <div className="text-sm font-medium text-foreground">{user.name || "..."}</div>
-                            <div className="text-xs text-muted-foreground">{user.registrationNumber || "..."}</div>
+                            <div className="text-sm font-medium text-foreground">
+                              {userName}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {regNumber}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -239,22 +331,13 @@ export function AdminOdTable() {
                           status={request.isConfirmedSubmission ? "confirmed" : "draft"} 
                         />
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary hover:text-primary/80"
-                      >
-                        View
-                      </Button>
-                      </td>
                     </tr>
                   );
                 })
               ) : (
                 // No OD requests
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     No OD requests found
                   </td>
                 </tr>
@@ -285,7 +368,7 @@ export function AdminOdTable() {
                 Previous
               </Button>
               
-              {[...Array(totalPages).keys()].map(page => (
+              {Array.from({ length: totalPages }, (_, page) => (
                 <Button
                   key={page}
                   variant={currentPage === page + 1 ? "default" : "outline"}

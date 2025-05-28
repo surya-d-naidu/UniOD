@@ -30,17 +30,23 @@ export async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "super-secret-key",
+    secret: process.env.SESSION_SECRET || "super-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      maxAge: 1000 * 60 * 60 * 24 // 1 day
-    }
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // Allow cross-site cookies in production
+      httpOnly: true
+    },
+    rolling: true, // Refresh the cookie on each request
+    name: 'od_tracker_session', // Custom session name
+    unset: 'destroy'
   };
 
-  app.set("trust proxy", 1);
+  // Configure trust proxy for Vercel
+  app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
@@ -106,14 +112,24 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) {
-        return next(err);
+        console.error("Authentication error:", err);
+        // Check for database connection errors
+        if (err.code === 'ETIMEDOUT' || err.message?.includes('timeout') || 
+            err.message?.includes('connection') || err.message?.includes('WebSocket')) {
+          return res.status(503).json({ 
+            message: "Database connection error. Please try again in a moment.",
+            retryable: true
+          });
+        }
+        return res.status(500).json({ message: "Internal server error during login" });
       }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
-      req.login(user, (err) => {
-        if (err) {
-          return next(err);
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error("Session login error:", loginErr);
+          return res.status(500).json({ message: "Failed to establish session" });
         }
         return res.status(200).json({
           id: user.id,

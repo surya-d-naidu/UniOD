@@ -38,19 +38,7 @@ export function AdminNav() {
             
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               <NavItem href="/admin" isActive={location === "/admin"}>
-                Dashboard
-              </NavItem>
-              <NavItem 
-                href="/admin/students" 
-                isActive={location.startsWith("/admin/students")}
-              >
-                Student Management
-              </NavItem>
-              <NavItem 
-                href="/admin/reports" 
-                isActive={location.startsWith("/admin/reports")}
-              >
-                Reports
+                OD Management Dashboard
               </NavItem>
             </div>
           </div>

@@ -1,6 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { config } from 'dotenv';
+
+// Load environment variables from .env file
+config();
 
 const app = express();
 app.use(express.json());
@@ -39,12 +43,33 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Add database connection error handler
+  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+    // Check for Neon/PostgreSQL connection errors
+    if (
+      err.code === 'ECONNREFUSED' || 
+      err.code === 'ETIMEDOUT' || 
+      err.message?.includes('connection') || 
+      err.message?.includes('timeout') ||
+      err.message?.includes('serverless') ||
+      err.message?.includes('pool')
+    ) {
+      console.error('Database connection error:', err);
+      return res.status(503).json({ 
+        message: "Database connection error. Please try again later.",
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      });
+    }
+    next(err);
+  });
+
+  // General error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    console.error('Server error:', err);
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after

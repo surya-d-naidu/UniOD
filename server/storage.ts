@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, executeWithRetry } from "./db";
 import { 
   users, odRequests, 
   type User, type InsertUser, 
@@ -6,16 +6,17 @@ import {
 } from "@shared/schema";
 import { eq, and, asc, desc, SQL, or, between, isNull } from "drizzle-orm";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import MemoryStore from "memorystore";
 
-const PostgresSessionStore = connectPg(session);
+// Use memory store for sessions instead of PostgreSQL to avoid connection issues
+const MemorySessionStore = MemoryStore(session);
 
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByRegistrationNumber(registrationNumber: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
   getAllStudents(): Promise<User[]>;
   getPendingStudents(): Promise<User[]>;
   approveStudent(studentId: number, adminId: number): Promise<User>;
@@ -33,42 +34,68 @@ export interface IStorage {
   getOdRequestsByStatus(status: string): Promise<OdRequest[]>;
   approveOdRequest(id: number, adminId: number): Promise<OdRequest>;
   rejectOdRequest(id: number, adminId: number): Promise<OdRequest>;
+  getOdRequestsWithUsers(): Promise<Array<OdRequest & { user?: User }>>;
+  clearAllOdRequests(): Promise<number>;
   
   // Session store
   sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any;
   
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      createTableIfMissing: true,
-      tableName: 'session'
+    // Use memory store for sessions to avoid database connection issues
+    this.sessionStore = new MemorySessionStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+      ttl: 86400000, // Session TTL in milliseconds (1 day)
+      stale: false
     });
   }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return executeWithRetry(async () => {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    });
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return executeWithRetry(async () => {
+      try {
+        const result = await db
+          .select()
+          .from(users)
+          .orderBy(asc(users.name));
+        
+        return result || [];
+      } catch (error) {
+        console.error("Error in getAllUsers:", error);
+        // Return empty array instead of throwing to prevent UI errors
+        return [];
+      }
+    });
   }
 
   async getUserByRegistrationNumber(registrationNumber: string): Promise<User | undefined> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.registrationNumber, registrationNumber));
-    return user;
+    return executeWithRetry(async () => {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.registrationNumber, registrationNumber));
+      return user;
+    });
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [createdUser] = await db
-      .insert(users)
-      .values(user)
-      .returning();
-    return createdUser;
+    return executeWithRetry(async () => {
+      const [createdUser] = await db
+        .insert(users)
+        .values(user)
+        .returning();
+      return createdUser;
+    });
   }
 
   async getAllStudents(): Promise<User[]> {
@@ -212,10 +239,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllOdRequests(): Promise<OdRequest[]> {
-    return db
+    const requests = await db
       .select()
       .from(odRequests)
       .orderBy(desc(odRequests.date));
+    
+    // Enhance with student information
+    const enhancedRequests = await Promise.all(
+      requests.map(async (request) => {
+        const user = await this.getUser(request.userId);
+        return {
+          ...request,
+          student: user ? {
+            id: user.id,
+            name: user.name,
+            registrationNumber: user.registrationNumber
+          } : null
+        };
+      })
+    );
+    
+    return enhancedRequests;
   }
 
   async getOdRequestsByStatus(status: string): Promise<OdRequest[]> {
@@ -252,6 +296,62 @@ export class DatabaseStorage implements IStorage {
       .where(eq(odRequests.id, id))
       .returning();
     return updatedRequest;
+  }
+
+  // Special method for export to reduce DB calls and improve performance
+  async getOdRequestsWithUsers(): Promise<Array<OdRequest & { user?: User }>> {
+    return executeWithRetry(async () => {
+      try {
+        // Get all OD requests
+        const allRequests = await db
+          .select()
+          .from(odRequests)
+          .orderBy(desc(odRequests.date));
+          
+        if (!allRequests || allRequests.length === 0) {
+          return [];
+        }
+        
+        // Extract all unique user IDs
+        const userIds = [...new Set(allRequests.map(request => request.userId))];
+        
+        // Batch fetch all needed users
+        const allUsers = await db
+          .select()
+          .from(users)
+          .where(
+            userIds.length > 0 
+              ? or(...userIds.map(id => eq(users.id, id))) 
+              : eq(users.id, -1) // Dummy condition if no users (should never happen)
+          );
+          
+        // Create a map of users by ID for quick lookup
+        const usersMap: Record<number, User> = {};
+        allUsers.forEach(user => {
+          usersMap[user.id] = user;
+        });
+        
+        // Join OD requests with their associated users
+        return allRequests.map(request => ({
+          ...request,
+          user: usersMap[request.userId]
+        }));
+      } catch (error) {
+        console.error("Error in getOdRequestsWithUsers:", error);
+        return [];
+      }
+    });
+  }
+
+  async clearAllOdRequests(): Promise<number> {
+    // Delete all OD requests and return the count of deleted entries
+    const result = await db.delete(odRequests).returning({ id: odRequests.id });
+    return result.length;
+  }
+  
+  async deleteAllOdRequests(): Promise<number> {
+    // Alias for clearAllOdRequests to match the function name used in routes
+    return this.clearAllOdRequests();
   }
 }
 

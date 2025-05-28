@@ -39,8 +39,8 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Dashboard Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-neutral-800">Admin Dashboard</h1>
-            <p className="mt-1 text-neutral-600">Manage students and OD requests</p>
+            <h1 className="text-2xl font-bold text-neutral-800">OD Management Dashboard</h1>
+            <p className="mt-1 text-neutral-600">Manage student approvals and OD requests</p>
           </div>
           
           {/* Stats Cards */}
